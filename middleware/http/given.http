@@ -1,0 +1,7 @@
+curl -H "Content-Type: applicationmalformed" http://localhost:3000
+
+####
+curl -H "Content-Type: application/xml" http://localhost:3000
+
+#####
+curl -H "Content-Type: application/json; charset=UTF-8" http://localhost:3000

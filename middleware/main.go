@@ -8,27 +8,40 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/goji/httpauth"
 	"github.com/gorilla/handlers"
 )
 
 type TestTypeString string
 
-func (t TestTypeString) f(int) {}
-
-//cale to HandelFunc to jest asercja typu.
-func middleware() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-	})
-
+func (t TestTypeString) f() {
+	log.Println(t)
 }
 
+//cale to HandelFunc to jest asercja typu.
+func middleware1() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("middleware1 done")
+	})
+}
+func middleware2(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("middleware2 started")
+		next.ServeHTTP(w, r)
+		fmt.Println("middleware2 done")
+	})
+}
+func middleware3(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("middleware3 started")
+		next.ServeHTTP(w, r)
+		fmt.Println("middleware3 done")
+	})
+}
 func main() {
 	//var t TestTypeString
-	t := TestTypeString("a")
-	fmt.Println(t)
-	t.f(2)
+	t := TestTypeString("its is just type assertion")
+	log.Println(t)
+	t.f()
 
 	logFile, err := os.OpenFile("server.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
@@ -36,15 +49,18 @@ func main() {
 	}
 
 	loggingHandler := newLoggingHandler(logFile)
-	authHandler := httpauth.SimpleBasicAuth("alice", "pa$$word")
+	//authHandler := httpauth.SimpleBasicAuth("alice", "pa$$word")
 
 	mux := http.NewServeMux()
 
 	finalHandler := http.HandlerFunc(final)
-	mux.Handle("/", loggingHandler(authHandler(enforceJSONHandler(finalHandler))))
+	mux.Handle("/", loggingHandler((enforceJSONHandler(finalHandler))))
 
-	//mux.Handle("/own")
+	mux.Handle("/test1", middleware3(middleware2(middleware1())))
 
+	// todo analyse how to create constructor wrapping middlewares
+	// todo commit and push code
+	//https://www.alexedwards.net/blog/making-and-using-middleware
 	log.Println("Listening on :3000...")
 	err = http.ListenAndServe(":3000", mux)
 	log.Fatal(err)
