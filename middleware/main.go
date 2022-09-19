@@ -8,13 +8,21 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/goji/httpauth"
 	"github.com/gorilla/handlers"
+	"github.com/justinas/alice"
 )
 
 type TestTypeString string
 
 func (t TestTypeString) f() {
 	log.Println(t)
+}
+
+func newLoggingHandler(dst io.Writer) func(http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
+		return handlers.LoggingHandler(dst, h)
+	}
 }
 
 //cale to HandelFunc to jest asercja typu.
@@ -37,6 +45,9 @@ func middleware3(next http.Handler) http.Handler {
 		fmt.Println("middleware3 done")
 	})
 }
+func middlware3contructor() func(h http.Handler) http.Handler {
+	return middleware3
+}
 func main() {
 	//var t TestTypeString
 	t := TestTypeString("its is just type assertion")
@@ -48,18 +59,26 @@ func main() {
 		log.Fatal(err)
 	}
 
+	//middleware3FromConstructor := middlware3contructor()
+
 	loggingHandler := newLoggingHandler(logFile)
-	//authHandler := httpauth.SimpleBasicAuth("alice", "pa$$word")
 
 	mux := http.NewServeMux()
 
 	finalHandler := http.HandlerFunc(final)
-	mux.Handle("/", loggingHandler((enforceJSONHandler(finalHandler))))
+	mux.Handle("/", loggingHandler(enforceJSONHandler(finalHandler)))
 
 	mux.Handle("/test1", middleware3(middleware2(middleware1())))
 
+	//there is library for wrapping middlewares
+	authHandler := httpauth.SimpleBasicAuth("alice", "pa$$word")
+
+	stdChain := alice.New(loggingHandler, authHandler, enforceJSONHandler)
+
+	mux.Handle("/foo", stdChain.Then(finalHandler))
+	mux.Handle("/bar", stdChain.Then(finalHandler))
+
 	// todo analyse how to create constructor wrapping middlewares
-	// todo commit and push code
 	//https://www.alexedwards.net/blog/making-and-using-middleware
 	log.Println("Listening on :3000...")
 	err = http.ListenAndServe(":3000", mux)
@@ -85,12 +104,6 @@ func enforceJSONHandler(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-func newLoggingHandler(dst io.Writer) func(http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return handlers.LoggingHandler(dst, h)
-	}
 }
 
 func final(w http.ResponseWriter, r *http.Request) {
