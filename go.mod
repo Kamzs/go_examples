@@ -1,4 +1,4 @@
-module middleware
+module github.com/Kamzs/go_examples
 
 go 1.18
 
