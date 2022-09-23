@@ -1,0 +1,9 @@
+skonczyc 
+
+https://www.alexedwards.net/blog/interfaces-explained#useful-interface-types
+
+jestem tutaj:
+Common and useful types
+
+
+jeszcze tam jest link do artykulu o dzieleniu na layaery interfejsami
