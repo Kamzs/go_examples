@@ -13,13 +13,6 @@ import (
 	"github.com/justinas/alice"
 )
 
-type TestTypeString string
-type TestAliasString = string
-
-func (t TestTypeString) f() {
-	log.Println(t)
-}
-
 func newLoggingHandler(dst io.Writer) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return handlers.LoggingHandler(dst, h)
@@ -49,30 +42,6 @@ func middlware3contructor() func(h http.Handler) http.Handler {
 	return middleware3
 }
 func main() {
-	// to nie jest asercja typu.
-	// asercja by byla jakbym mial obiekt jakiegos interfejsu i chcial go zrzutowac na typ
-	// poAsercjiTypu, czySiePowiodloCzyNie := obiektTypuInterfejsowego.(typ - np. implementujacy interfejs)
-	//przyklad ponziej
-	var a interface{} = "a"
-	b, ok := a.(string)
-	if !ok {
-		log.Fatal("not succesfull type assertion")
-	}
-	fmt.Println(b)
-
-	// to nie jest tez alias
-	// bo jest tak
-	// type TestTypeString string
-	// a nie tak
-	// type TestTypeString = string
-	// alias nie tworzy nowego typu
-	var alias TestAliasString = "a"
-	fmt.Println(alias)
-	fmt.Printf("alias type: %T i.e. not type 'defined' by alias\n", alias)
-
-	t := TestTypeString("its is just type assertion")
-	log.Println(t)
-	t.f()
 
 	logFile, err := os.OpenFile("server.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
