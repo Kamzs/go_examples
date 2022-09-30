@@ -23,8 +23,8 @@ func main() {
 	//runBuiltinErrorExample()
 
 	//runFmtStringerExample()
-	bufferExample()
-	runIOReaderIOWriterExample()
+	//bufferExample()
+	ioReaderWriterOwnImplementation()
 }
 
 type someType struct {
@@ -58,11 +58,6 @@ func runFmtStringerExample() {
 	fmt.Println(someType{b: "test2"})
 }
 
-func runIOReaderIOWriterExample() {
-	//Read reads smth and stores it in []byte p
-	//Write reads []byte p and do smth to this data
-}
-
 // https://programmer.group/writer-and-reader-in-go-language.html
 func bufferExample() {
 
@@ -76,4 +71,36 @@ func bufferExample() {
 	b.WriteTo(os.Stdout)
 	data, err := ioutil.ReadAll(&b)
 	fmt.Println(string(data), err)
+	fmt.Println()
+}
+
+type ioReaderWriter struct {
+	storage string
+}
+
+func (rw *ioReaderWriter) Writer(p []byte) (int, error) {
+	rw.storage = string(p)
+	return len(rw.storage), nil
+}
+func (rw *ioReaderWriter) Reader(p []byte) (int, error) {
+	//Reader interface implementation is tricky
+	//append on p would modify only copy of slice passed here ---> _, _ = rw.Reader(by)
+	//in order to see modified original slice underlying array has to be modified
+	//it can be done as below
+	for i, v := range rw.storage {
+		p[i] = byte(v)
+	}
+	return len(rw.storage), nil
+}
+func ioReaderWriterOwnImplementation() {
+	//Read reads smth and stores it in []byte p
+	//Write reads []byte p and do smth to this data
+
+	rw := ioReaderWriter{}
+	_, _ = rw.Writer([]byte("some bytes"))
+	by := make([]byte, 10)
+	_, _ = rw.Reader(by)
+
+	fmt.Println(string(by))
+
 }
